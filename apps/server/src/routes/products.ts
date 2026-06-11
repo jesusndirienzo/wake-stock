@@ -27,6 +27,7 @@ router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response)
             name: true,
             email: true,
             phone: true,
+            website: true,
           }
         }
       },
@@ -52,6 +53,7 @@ router.get('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Respon
             name: true,
             email: true,
             phone: true,
+            website: true,
           }
         }
       },
@@ -125,6 +127,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req: Authenticated
             name: true,
             email: true,
             phone: true,
+            website: true,
           }
         }
       }
@@ -206,6 +209,7 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req: Authenticat
             name: true,
             email: true,
             phone: true,
+            website: true,
           }
         }
       }
@@ -283,6 +287,7 @@ router.patch('/:id/stock', authMiddleware, async (req: AuthenticatedRequest, res
             name: true,
             email: true,
             phone: true,
+            website: true,
           }
         }
       }

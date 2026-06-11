@@ -14,6 +14,7 @@ interface Product {
   minQuantity: number;
   maxQuantity: number;
   status: "DISPONIBLE" | "AGOTADO" | "BAJO_STOCK";
+  unit: string;
   imageUrl: string | null;
   notes: string | null;
   supplier: {
@@ -143,6 +144,11 @@ export default function ChecklistPage() {
     }
     return matchesSearch;
   });
+
+  const UNIT_LABELS: Record<string, string> = {
+    UNIDAD: "uds", KG: "kg", GRAMOS: "gr",
+    PAQUETE: "pack", LITRO: "l", CAJA: "box",
+  };
 
   return (
     <AuthGuard>
@@ -370,7 +376,7 @@ export default function ChecklistPage() {
                           </span>
                           <span className="text-zinc-300">•</span>
                           <span className="font-semibold text-zinc-600">
-                            Stock: {product.stock}/{product.maxQuantity}
+                            Stock: {product.stock}/{product.maxQuantity} {UNIT_LABELS[product.unit] ?? "uds"}
                           </span>
                         </div>
                       </div>

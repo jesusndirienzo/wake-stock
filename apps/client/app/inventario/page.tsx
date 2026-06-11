@@ -15,6 +15,7 @@ interface Product {
   minQuantity: number;
   maxQuantity: number;
   status: "DISPONIBLE" | "AGOTADO" | "BAJO_STOCK";
+  unit: string;
   imageUrl: string | null;
   notes: string | null;
   durationDays: number | null;
@@ -24,6 +25,7 @@ interface Product {
     name: string;
     email: string | null;
     phone: string | null;
+    website: string | null;
   } | null;
 }
 
@@ -180,6 +182,11 @@ export default function InventarioPage() {
   });
 
   const isAdmin = user?.role === "ADMIN";
+
+  const UNIT_LABELS: Record<string, string> = {
+    UNIDAD: "uds", KG: "kg", GRAMOS: "gr",
+    PAQUETE: "pack", LITRO: "l", CAJA: "box",
+  };
 
   return (
     <AuthGuard>
@@ -425,7 +432,7 @@ export default function InventarioPage() {
 
                       <div className="flex items-center gap-3 shrink-0 box-border pr-1!">
                         <span className="text-sm font-bold text-zinc-700 bg-white border border-zinc-200 px-3! py-1! rounded-xl shadow-sm">
-                          {product.stock} uds.
+                          {product.stock} {UNIT_LABELS[product.unit] ?? "uds"}.
                         </span>
                         <span
                           className={`text-[10px] font-bold uppercase tracking-wider rounded-lg border ${badgeColor}`}
@@ -458,7 +465,7 @@ export default function InventarioPage() {
                                 Mínimo Requerido:
                               </span>
                               <span className="ml-2 font-bold text-zinc-800">
-                                {product.minQuantity} uds.
+                                {product.minQuantity} {UNIT_LABELS[product.unit] ?? "uds"}.
                               </span>
                             </div>
                             <div>
@@ -466,7 +473,7 @@ export default function InventarioPage() {
                                 Capacidad Máxima:
                               </span>
                               <span className="ml-2 font-bold text-zinc-800">
-                                {product.maxQuantity} uds.
+                                {product.maxQuantity} {UNIT_LABELS[product.unit] ?? "uds"}.
                               </span>
                             </div>
                             <div>
@@ -486,7 +493,7 @@ export default function InventarioPage() {
                               {product.supplier ? (
                                 <span className="ml-2 font-bold text-[#2B4236]">
                                   {product.supplier.phone ||
-                                    product.supplier.email ||
+                                    product.supplier.website ||
                                     "N/D"}
                                 </span>
                               ) : (
