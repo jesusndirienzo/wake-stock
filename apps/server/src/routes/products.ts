@@ -16,10 +16,25 @@ function determineStatus(stock: number, minQuantity: number): ProductStatus {
   return 'DISPONIBLE';
 }
 
+// Helper: construye el filtro de visibilidad por área.
+// ADMIN ve todo (sin filtro). USER solo ve su área + los productos compartidos (area: null).
+function buildAreaFilter(req: AuthenticatedRequest) {
+  if (req.user?.role === 'ADMIN') {
+    return {};
+  }
+  const userArea = req.user?.area;
+  if (userArea === 'COCINA' || userArea === 'BARRA') {
+    return { OR: [{ area: userArea }, { area: null }] };
+  }
+  // USER sin área asignada todavía: por seguridad, solo ve los productos compartidos
+  return { area: null };
+}
+
 // 1. GET /api/products → list all
 router.get('/', authMiddleware, async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
     const products = await prisma.product.findMany({
+      where: buildAreaFilter(req),
       include: {
         supplier: {
           select: {
@@ -63,6 +78,11 @@ router.get('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Respon
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
+    // Si no es ADMIN, verificar que el producto sea de su área o compartido
+    if (req.user?.role !== 'ADMIN' && product.area !== null && product.area !== req.user?.area) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
     return res.json(product);
   } catch (error) {
     console.error('❌ Error al obtener producto:', error);
@@ -73,10 +93,14 @@ router.get('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Respon
 // 3. POST /api/products → crear (solo ADMIN)
 router.post('/', authMiddleware, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
-    const { name, stock, minQuantity, maxQuantity, durationDays, imageUrl, supplierId, unit, notes, isFavorite } = req.body;
+    const { name, stock, minQuantity, maxQuantity, durationDays, imageUrl, supplierId, unit, notes, isFavorite, area } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'El nombre del producto es obligatorio' });
+    }
+
+    if (area !== undefined && area !== null && area !== 'COCINA' && area !== 'BARRA') {
+      return res.status(400).json({ error: 'Área inválida. Debe ser COCINA, BARRA o null (compartido)' });
     }
 
     // Verificar si ya existe un producto con el mismo nombre
@@ -120,6 +144,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req: Authenticated
         status,
         unit: (unit as ProductUnit) || 'UNIDAD',
         isFavorite: !!isFavorite,
+        area: area === 'COCINA' || area === 'BARRA' ? area : null,
       },
       include: {
         supplier: {
@@ -145,10 +170,14 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req: Authenticated
 router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const { name, stock, minQuantity, maxQuantity, durationDays, imageUrl, supplierId, unit, notes, isFavorite } = req.body;
+    const { name, stock, minQuantity, maxQuantity, durationDays, imageUrl, supplierId, unit, notes, isFavorite, area } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'El nombre del producto es obligatorio' });
+    }
+
+    if (area !== undefined && area !== null && area !== 'COCINA' && area !== 'BARRA') {
+      return res.status(400).json({ error: 'Área inválida. Debe ser COCINA, BARRA o null (compartido)' });
     }
 
     // Verificar si el producto existe
@@ -189,6 +218,9 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req: Authenticat
 
     const status = determineStatus(parsedStock, parsedMin);
 
+    // Si el stock cambió, se entiende que el problema fue atendido: desbloquear el reporte
+    const stockChanged = parsedStock !== productExists.stock;
+
     const updatedProduct = await prisma.product.update({
       where: { id },
       data: {
@@ -203,6 +235,8 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req: Authenticat
         status,
         unit: (unit as ProductUnit) || 'UNIDAD',
         isFavorite: !!isFavorite,
+        area: area === 'COCINA' || area === 'BARRA' ? area : null,
+        ...(stockChanged ? { reportedAt: null } : {}),
       },
       include: {
         supplier: {
@@ -281,6 +315,7 @@ router.patch('/:id/stock', authMiddleware, async (req: AuthenticatedRequest, res
       data: {
         stock: parsedStock,
         status: newStatus,
+        reportedAt: null, // Actualizar el stock siempre desbloquea el reporte
       },
       include: {
         supplier: {

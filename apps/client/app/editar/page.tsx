@@ -34,6 +34,7 @@ function EditarForm() {
     supplierId: "",
     unit: "UNIDAD",
     notes: "",
+    area: "",
   });
 
   // Estado del formulario de Proveedor
@@ -102,6 +103,7 @@ function EditarForm() {
               supplierId: data.supplierId || "",
               unit: data.unit || "UNIDAD",
               notes: data.notes || "",
+              area: data.area || "",
             });
           } else {
             setSupplierForm({
@@ -160,6 +162,7 @@ function EditarForm() {
           supplierId: productForm.supplierId || null,
           unit: productForm.unit,
           notes: productForm.notes || null,
+          area: productForm.area || null,
         };
         response = isEditMode
           ? await api.put(endpoint, body)
@@ -455,6 +458,23 @@ function EditarForm() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-black text-zinc-400 uppercase tracking-widest mb-2! pl-1!">
+                  Área de Visibilidad
+                </label>
+                <select
+                  value={productForm.area}
+                  onChange={(e) =>
+                    setProductForm({ ...productForm, area: e.target.value })
+                  }
+                  className="w-full rounded-2xl bg-white border border-zinc-200 py-3! px-4! text-sm font-bold text-zinc-800 outline-none transition-all duration-200 focus:border-[#2B4236] focus:ring-1 focus:ring-[#2B4236] shadow-sm cursor-pointer"
+                >
+                  <option value="">Ambos (Cocina y Barra)</option>
+                  <option value="COCINA">Solo Cocina</option>
+                  <option value="BARRA">Solo Barra</option>
+                </select>
               </div>
 
               <div>

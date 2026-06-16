@@ -9,6 +9,7 @@ export interface AuthenticatedRequest extends Request {
     email: string;
     name: string;
     role: "ADMIN" | "USER";
+    area: "COCINA" | "BARRA" | null;
   };
 }
 

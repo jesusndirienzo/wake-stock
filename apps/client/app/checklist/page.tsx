@@ -18,6 +18,7 @@ interface Product {
   imageUrl: string | null;
   notes: string | null;
   isFavorite: boolean;
+  reportedAt: string | null;
   supplier: {
     name: string;
   } | null;
@@ -72,9 +73,15 @@ export default function ChecklistPage() {
     );
   };
 
+  const isAdmin = user?.role === "ADMIN";
+
   const handleSelectAllAlerts = () => {
     const alertIds = products
-      .filter((p) => p.status === "AGOTADO" || p.status === "BAJO_STOCK")
+      .filter(
+        (p) =>
+          (p.status === "AGOTADO" || p.status === "BAJO_STOCK") &&
+          (isAdmin || !p.reportedAt),
+      )
       .map((p) => p.id);
     setSelectedIds(alertIds);
   };
@@ -326,6 +333,7 @@ export default function ChecklistPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pb-32!">
               {filteredProducts.map((product) => {
                 const isSelected = selectedIds.includes(product.id);
+                const isLocked = !!product.reportedAt && !isAdmin;
 
                 // Colores de badges refinados
                 let badgeColor = "";
@@ -347,11 +355,22 @@ export default function ChecklistPage() {
                 return (
                   <div
                     key={product.id}
-                    onClick={() => handleToggleSelect(product.id)}
-                    className={`group p-3! relative flex items-center justify-between rounded-2xl border cursor-pointer transition-all duration-200 box-border ${
-                      isSelected
+                    onClick={() => !isLocked && handleToggleSelect(product.id)}
+                    title={
+                      isLocked
+                        ? "Ya fue reportado por cocina o barra. Se desbloquea al actualizar el stock."
+                        : undefined
+                    }
+                    className={`group p-3! relative flex items-center justify-between rounded-2xl border transition-all duration-200 box-border ${
+                      isLocked
+                        ? "border-zinc-200 bg-zinc-50 opacity-60 cursor-not-allowed"
+                        : "cursor-pointer"
+                    } ${
+                      !isLocked && isSelected
                         ? "border-[#2B4236] bg-[#2B4236]/5 shadow-[0_4px_12px_rgba(43,66,84,0.08)]"
-                        : "border-zinc-200 bg-white hover:border-[#2B4236]/30 hover:bg-zinc-50/40 shadow-[0_4px_10px_rgba(0,0,0,0.02)]"
+                        : !isLocked
+                          ? "border-zinc-200 bg-white hover:border-[#2B4236]/30 hover:bg-zinc-50/40 shadow-[0_4px_10px_rgba(0,0,0,0.02)]"
+                          : ""
                     }`}
                   >
                     <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -401,12 +420,19 @@ export default function ChecklistPage() {
                       </div>
                     </div>
 
-                    {/* Badge del Estado */}
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg border ml-3 shrink-0 ${badgeColor}`}
-                    >
-                      {statusLabel}
-                    </span>
+                    {/* Badges de Estado y Bloqueo */}
+                    <div className="flex flex-col items-end gap-1.5 ml-3 shrink-0">
+                      {isLocked && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg border bg-zinc-100 text-zinc-500 border-zinc-200">
+                          Ya reportado
+                        </span>
+                      )}
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg border ${badgeColor}`}
+                      >
+                        {statusLabel}
+                      </span>
+                    </div>
                   </div>
                 );
               })}

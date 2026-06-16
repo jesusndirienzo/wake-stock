@@ -19,6 +19,8 @@ interface Product {
   imageUrl: string | null;
   notes: string | null;
   isFavorite: boolean;
+  area: "COCINA" | "BARRA" | null;
+  reportedAt: string | null;
   durationDays: number | null;
   supplierId: string | null;
   supplier: {
@@ -459,6 +461,16 @@ export default function InventarioPage() {
                             {product.isFavorite && (
                               <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-1.5! py-0.5!">
                                 ★ Recurrente
+                              </span>
+                            )}
+                            {product.area && (
+                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-sky-700 bg-sky-50 border border-sky-200 rounded-md px-1.5! py-0.5!">
+                                {product.area === "COCINA" ? "Cocina" : "Barra"}
+                              </span>
+                            )}
+                            {product.reportedAt && (
+                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-100 border border-zinc-200 rounded-md px-1.5! py-0.5!">
+                                Ya reportado
                               </span>
                             )}
                           </div>

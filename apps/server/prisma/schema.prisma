@@ -26,12 +26,18 @@ enum ProductUnit {
   CAJA
 }
 
+enum Area {
+  COCINA
+  BARRA
+}
+
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String   // Hashed con bcrypt
   name      String
   role      Role     @default(USER)
+  area      Area?    // null = ADMIN (ve todo); requerido en la práctica para USER
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -64,6 +70,8 @@ model Product {
   imageUrl     String?
   notes        String?
   isFavorite   Boolean       @default(false)
+  area         Area?         // null = visible para cocina y barra
+  reportedAt   DateTime?     // null = disponible para reportar; con fecha = ya reportado, bloqueado
 
   // Relación Opcional con Proveedor
   supplierId   String?
