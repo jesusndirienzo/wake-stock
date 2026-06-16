@@ -73,7 +73,7 @@ router.get('/:id', authMiddleware, async (req: AuthenticatedRequest, res: Respon
 // 3. POST /api/products → crear (solo ADMIN)
 router.post('/', authMiddleware, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
-    const { name, stock, minQuantity, maxQuantity, durationDays, imageUrl, supplierId, unit, notes } = req.body;
+    const { name, stock, minQuantity, maxQuantity, durationDays, imageUrl, supplierId, unit, notes, isFavorite } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'El nombre del producto es obligatorio' });
@@ -119,6 +119,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req: Authenticated
         supplierId: supplierId || null,
         status,
         unit: (unit as ProductUnit) || 'UNIDAD',
+        isFavorite: !!isFavorite,
       },
       include: {
         supplier: {
@@ -144,7 +145,7 @@ router.post('/', authMiddleware, requireRole('ADMIN'), async (req: Authenticated
 router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: Response): Promise<any> => {
   try {
     const { id } = req.params;
-    const { name, stock, minQuantity, maxQuantity, durationDays, imageUrl, supplierId, unit, notes } = req.body;
+    const { name, stock, minQuantity, maxQuantity, durationDays, imageUrl, supplierId, unit, notes, isFavorite } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'El nombre del producto es obligatorio' });
@@ -201,6 +202,7 @@ router.put('/:id', authMiddleware, requireRole('ADMIN'), async (req: Authenticat
         supplierId: supplierId || null,
         status,
         unit: (unit as ProductUnit) || 'UNIDAD',
+        isFavorite: !!isFavorite,
       },
       include: {
         supplier: {
@@ -297,6 +299,45 @@ router.patch('/:id/stock', authMiddleware, async (req: AuthenticatedRequest, res
   } catch (error) {
     console.error('❌ Error al actualizar stock de producto:', error);
     return res.status(500).json({ error: 'Error al actualizar stock de producto' });
+  }
+});
+
+// 7. PATCH /api/products/:id/favorite → marcar/desmarcar como recurrente (solo ADMIN)
+router.patch('/:id/favorite', authMiddleware, requireRole('ADMIN'), async (req: AuthenticatedRequest, res: Response): Promise<any> => {
+  try {
+    const { id } = req.params;
+    const { isFavorite } = req.body;
+
+    const product = await prisma.product.findUnique({
+      where: { id },
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    const updatedProduct = await prisma.product.update({
+      where: { id },
+      data: {
+        isFavorite: !!isFavorite,
+      },
+      include: {
+        supplier: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            website: true,
+          }
+        }
+      }
+    });
+
+    return res.json(updatedProduct);
+  } catch (error) {
+    console.error('❌ Error al actualizar favorito de producto:', error);
+    return res.status(500).json({ error: 'Error al actualizar favorito de producto' });
   }
 });
 

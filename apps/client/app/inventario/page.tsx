@@ -18,6 +18,7 @@ interface Product {
   unit: string;
   imageUrl: string | null;
   notes: string | null;
+  isFavorite: boolean;
   durationDays: number | null;
   supplierId: string | null;
   supplier: {
@@ -36,7 +37,7 @@ export default function InventarioPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<
-    "all" | "alert" | "available"
+    "all" | "alert" | "available" | "favorite"
   >("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -133,6 +134,23 @@ export default function InventarioPage() {
     }
   };
 
+  const handleToggleFavorite = async (id: string, current: boolean) => {
+    try {
+      const response = await api.patch(`/api/products/${id}/favorite`, {
+        isFavorite: !current,
+      });
+      if (!response.ok) return;
+      const updatedProduct = (await response.json()) as Product;
+      setProducts((prev) =>
+        prev.map((p) => (p.id === id ? updatedProduct : p)),
+      );
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error ? err.message : "Error al actualizar favorito",
+      );
+    }
+  };
+
   const handleDeleteProduct = async (id: string, name: string) => {
     if (
       !window.confirm(
@@ -177,6 +195,9 @@ export default function InventarioPage() {
     }
     if (filterStatus === "available") {
       return matchesSearch && product.status === "DISPONIBLE";
+    }
+    if (filterStatus === "favorite") {
+      return matchesSearch && product.isFavorite;
     }
     return matchesSearch;
   });
@@ -322,6 +343,17 @@ export default function InventarioPage() {
                 )
               </button>
               <button
+                onClick={() => setFilterStatus("favorite")}
+                className={`px-5! py-2! text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                  filterStatus === "favorite"
+                    ? "bg-[#2B4236] text-white shadow-md"
+                    : "text-zinc-550 hover:text-zinc-900"
+                }`}
+              >
+                Recurrentes (
+                {products.filter((p) => p.isFavorite).length})
+              </button>
+              <button
                 onClick={() => setFilterStatus("available")}
                 className={`px-5! py-2! text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                   filterStatus === "available"
@@ -420,9 +452,16 @@ export default function InventarioPage() {
                         </div>
 
                         <div className="min-w-0">
-                          <h3 className="font-bold text-zinc-900 text-base truncate group-hover:text-[#2B4236] transition-colors duration-200">
-                            {product.name}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-bold text-zinc-900 text-base truncate group-hover:text-[#2B4236] transition-colors duration-200">
+                              {product.name}
+                            </h3>
+                            {product.isFavorite && (
+                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-1.5! py-0.5!">
+                                ★ Recurrente
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs font-medium text-zinc-500 truncate mt-0.5!">
                             Proveedor:{" "}
                             {product.supplier?.name || "Sin Proveedor"}
@@ -431,6 +470,39 @@ export default function InventarioPage() {
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0 box-border pr-1!">
+                        {isAdmin && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleFavorite(product.id, product.isFavorite);
+                            }}
+                            title={
+                              product.isFavorite
+                                ? "Quitar de recurrentes"
+                                : "Marcar como recurrente"
+                            }
+                            className={`h-8 w-8 flex items-center justify-center rounded-lg transition-colors cursor-pointer ${
+                              product.isFavorite
+                                ? "text-amber-500 hover:text-amber-600"
+                                : "text-zinc-300 hover:text-zinc-400"
+                            }`}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill={product.isFavorite ? "currentColor" : "none"}
+                              stroke="currentColor"
+                              strokeWidth={1.5}
+                              className="w-5 h-5"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"
+                              />
+                            </svg>
+                          </button>
+                        )}
                         <span className="text-sm font-bold text-zinc-700 bg-white border border-zinc-200 px-3! py-1! rounded-xl shadow-sm">
                           {product.stock} {UNIT_LABELS[product.unit] ?? "uds"}.
                         </span>

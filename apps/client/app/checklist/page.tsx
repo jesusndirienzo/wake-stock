@@ -17,6 +17,7 @@ interface Product {
   unit: string;
   imageUrl: string | null;
   notes: string | null;
+  isFavorite: boolean;
   supplier: {
     name: string;
   } | null;
@@ -30,7 +31,7 @@ export default function ChecklistPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [filterStatus, setFilterStatus] = useState<
-    "all" | "alert" | "available"
+    "all" | "alert" | "available" | "favorite"
   >("all");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -141,6 +142,9 @@ export default function ChecklistPage() {
     }
     if (filterStatus === "available") {
       return matchesSearch && product.status === "DISPONIBLE";
+    }
+    if (filterStatus === "favorite") {
+      return matchesSearch && product.isFavorite;
     }
     return matchesSearch;
   });
@@ -264,6 +268,16 @@ export default function ChecklistPage() {
                 )
               </button>
               <button
+                onClick={() => setFilterStatus("favorite")}
+                className={`px-5! py-2! text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
+                  filterStatus === "favorite"
+                    ? "bg-[#2B4236] text-white shadow-md"
+                    : "text-zinc-500 hover:text-zinc-950"
+                }`}
+              >
+                Recurrentes ({products.filter((p) => p.isFavorite).length})
+              </button>
+              <button
                 onClick={() => setFilterStatus("available")}
                 className={`px-5! py-2! text-xs font-bold rounded-xl transition-all duration-200 cursor-pointer ${
                   filterStatus === "available"
@@ -367,8 +381,13 @@ export default function ChecklistPage() {
 
                       {/* Detalles del Producto */}
                       <div className="min-w-0">
-                        <h4 className="font-bold text-zinc-900 truncate text-base group-hover:text-[#2B4236] transition-colors duration-200">
+                        <h4 className="flex items-center gap-1.5 font-bold text-zinc-900 truncate text-base group-hover:text-[#2B4236] transition-colors duration-200">
                           {product.name}
+                          {product.isFavorite && (
+                            <span className="text-amber-500 shrink-0" title="Recurrente">
+                              ★
+                            </span>
+                          )}
                         </h4>
                         <div className="flex flex-wrap items-center gap-2 mt-1 text-xs font-medium text-zinc-500">
                           <span className="truncate">

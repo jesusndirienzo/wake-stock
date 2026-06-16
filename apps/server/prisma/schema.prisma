@@ -63,6 +63,7 @@ model Product {
   durationDays Int?
   imageUrl     String?
   notes        String?
+  isFavorite   Boolean       @default(false)
 
   // Relación Opcional con Proveedor
   supplierId   String?
