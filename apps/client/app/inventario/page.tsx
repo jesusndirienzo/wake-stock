@@ -454,30 +454,29 @@ export default function InventarioPage() {
                         </div>
 
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-zinc-900 text-base truncate group-hover:text-[#2B4236] transition-colors duration-200">
-                              {product.name}
-                            </h3>
+                          <h3 className="font-bold text-zinc-900 text-base truncate group-hover:text-[#2B4236] transition-colors duration-200">
+                            {product.name}
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1!">
                             {product.isFavorite && (
-                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-1.5! py-0.5!">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-1.5! py-0.5!">
                                 ★ Recurrente
                               </span>
                             )}
                             {product.area && (
-                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-sky-700 bg-sky-50 border border-sky-200 rounded-md px-1.5! py-0.5!">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-sky-700 bg-sky-50 border border-sky-200 rounded-md px-1.5! py-0.5!">
                                 {product.area === "COCINA" ? "Cocina" : "Barra"}
                               </span>
                             )}
                             {product.reportedAt && (
-                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-100 border border-zinc-200 rounded-md px-1.5! py-0.5!">
+                              <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-100 border border-zinc-200 rounded-md px-1.5! py-0.5!">
                                 Ya reportado
                               </span>
                             )}
+                            <span className="text-xs font-medium text-zinc-500 truncate">
+                              Prov: {product.supplier?.name || "Sin Proveedor"}
+                            </span>
                           </div>
-                          <p className="text-xs font-medium text-zinc-500 truncate mt-0.5!">
-                            Proveedor:{" "}
-                            {product.supplier?.name || "Sin Proveedor"}
-                          </p>
                         </div>
                       </div>
 
