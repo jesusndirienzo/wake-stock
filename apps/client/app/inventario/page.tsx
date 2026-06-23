@@ -454,7 +454,7 @@ export default function InventarioPage() {
                         </div>
 
                         <div className="min-w-0">
-                          <h3 className="font-bold text-zinc-900 text-base truncate group-hover:text-[#2B4236] transition-colors duration-200">
+                          <h3 className="font-bold text-zinc-900 text-base group-hover:text-[#2B4236] transition-colors duration-200 line-clamp-2">
                             {product.name}
                           </h3>
                           <div className="flex flex-wrap items-center gap-1.5 mt-1!">
