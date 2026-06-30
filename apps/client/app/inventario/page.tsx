@@ -646,10 +646,8 @@ export default function InventarioPage() {
                                 onChange={(e) => {
                                   const val = e.target.value;
                                   // Permitir vacío, números, punto y coma
-                                  if (val === "") {
-                                    handleStockInputChange(product.id, 0);
-                                  } else if (/^[0-9.,]*$/.test(val)) {
-                                    // Guardar el string exacto que escribió
+                                  if (val === "" || /^[0-9.,]*$/.test(val)) {
+                                    // Guardar el string exacto (vacío o con decimales)
                                     // Al guardar en BD se convierte a número
                                     setStockInputs((prev) => ({
                                       ...prev,
