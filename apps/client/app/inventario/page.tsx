@@ -614,8 +614,7 @@ export default function InventarioPage() {
                                     product.id,
                                     Math.max(
                                       0,
-                                      (stockInputs[product.id] ??
-                                        product.stock) - 1,
+                                      Math.round(((stockInputs[product.id] ?? product.stock) - 0.5) * 100) / 100,
                                     ),
                                   )
                                 }
@@ -638,16 +637,17 @@ export default function InventarioPage() {
                               </button>
 
                               <input
-                                type="string"
+                                type="number"
+                                step="0.01"
                                 min="0"
                                 value={stockInputs[product.id] ?? product.stock}
                                 onChange={(e) =>
                                   handleStockInputChange(
                                     product.id,
-                                    parseInt(e.target.value) || 0,
+                                    parseFloat(e.target.value) || 0,
                                   )
                                 }
-                                className="w-12 text-center bg-transparent border-none text-zinc-900 text-sm font-bold focus:outline-none [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:margin-0 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:margin-0 [&::-webkit-inner-spin-button]:appearance-none"
+                                className="w-16 text-center bg-transparent border-none text-zinc-900 text-sm font-bold focus:outline-none [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:margin-0 [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:margin-0 [&::-webkit-inner-spin-button]:appearance-none"
                               />
 
                               <button
@@ -655,8 +655,7 @@ export default function InventarioPage() {
                                   handleStockInputChange(
                                     product.id,
                                     Math.min(
-                                      (stockInputs[product.id] ??
-                                        product.stock) + 1,
+                                      Math.round(((stockInputs[product.id] ?? product.stock) + 0.5) * 100) / 100,
                                       user?.role === "USER"
                                         ? product.maxQuantity
                                         : Infinity,
