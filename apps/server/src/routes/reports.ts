@@ -145,6 +145,15 @@ router.post('/order-request-pdf', authMiddleware, async (req: AuthenticatedReque
         stock: true,
         minQuantity: true,
         maxQuantity: true,
+        unit: true,
+        status: true,
+        supplier: {
+          select: {
+            name: true,
+            phone: true,
+            email: true,
+          },
+        },
       },
       orderBy: {
         name: 'asc',
