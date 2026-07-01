@@ -137,144 +137,104 @@ export async function generateOrderRequestPDF(
       .text(`Generado por: ${userName}`)
       .moveDown(1);
 
-    // Agrupar por proveedor
-    const groupedBySupplier = new Map<string | null, OrderRequestProductData[]>();
-    products.forEach((product) => {
-      const supplierKey = product.supplier?.name || null;
-      if (!groupedBySupplier.has(supplierKey)) {
-        groupedBySupplier.set(supplierKey, []);
+    // Ordenar productos: primero por proveedor, luego por nombre
+    const sortedProducts = [...products].sort((a, b) => {
+      const supplierA = a.supplier?.name || "zzz_sin_proveedor";
+      const supplierB = b.supplier?.name || "zzz_sin_proveedor";
+
+      if (supplierA !== supplierB) {
+        return supplierA.localeCompare(supplierB);
       }
-      groupedBySupplier.get(supplierKey)!.push(product);
+      return a.name.localeCompare(b.name);
     });
 
-    const rowHeight = 25;
+    // Definir columnas y anchos
+    const columns = [
+      { header: "Producto", x: 50, width: 100 },
+      { header: "Stock", x: 155, width: 30 },
+      { header: "Mín", x: 190, width: 25 },
+      { header: "Máx", x: 220, width: 25 },
+      { header: "Unidad", x: 250, width: 40 },
+      { header: "Estado", x: 295, width: 60 },
+      { header: "A pedir", x: 360, width: 35 },
+      { header: "Proveedor", x: 400, width: 70 },
+      { header: "Contacto", x: 475, width: 60 },
+    ];
+
+    const rowHeight = 22;
     let currentY = doc.y;
+    const tableTop = currentY;
 
-    // Renderizar cada proveedor
-    groupedBySupplier.forEach((supplierProducts, supplierName) => {
-      // Verificar salto de página
-      if (currentY > 650) {
-        doc.addPage();
-        currentY = 50;
-      }
+    // Headers de tabla
+    doc
+      .font("Helvetica-Bold")
+      .fontSize(8);
 
-      // Nombre del proveedor
-      if (supplierName) {
-        doc
-          .font("Helvetica-Bold")
-          .fontSize(12)
-          .text(supplierName)
-          .moveDown(0.3);
-
-        // Teléfono y email
-        const supplier = supplierProducts[0]!.supplier;
-        let contactInfo = "";
-        if (supplier?.phone) contactInfo += `Tel: ${supplier.phone}`;
-        if (supplier?.email) {
-          if (contactInfo) contactInfo += " | ";
-          contactInfo += `Email: ${supplier.email}`;
-        }
-        if (contactInfo) {
-          doc
-            .font("Helvetica")
-            .fontSize(9)
-            .text(contactInfo)
-            .moveDown(0.3);
-        }
-      } else {
-        doc
-          .font("Helvetica-Bold")
-          .fontSize(12)
-          .text("Sin Proveedor Asignado")
-          .moveDown(0.3);
-      }
-
-      currentY = doc.y;
-
-      // Headers de tabla
-      const tableTop = currentY;
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(10)
-        .text("Producto", 50, tableTop)
-        .text("Stock", 150, tableTop)
-        .text("Mín", 210, tableTop)
-        .text("Máx", 250, tableTop)
-        .text("Unidad", 290, tableTop)
-        .text("Estado", 350, tableTop)
-        .text("A pedir", 420, tableTop);
-
-      // Línea separadora
-      doc
-        .moveTo(50, tableTop + 18)
-        .lineTo(520, tableTop + 18)
-        .stroke();
-
-      currentY = tableTop + 28;
-
-      // Filas de productos
-      doc.font("Helvetica").fontSize(9);
-      supplierProducts.forEach((product) => {
-        // Verificar salto de página
-        if (currentY > 700) {
-          doc.addPage();
-          currentY = 50;
-
-          // Repetir headers después del salto
-          doc
-            .font("Helvetica-Bold")
-            .fontSize(10)
-            .text("Producto", 50, currentY)
-            .text("Stock", 150, currentY)
-            .text("Mín", 210, currentY)
-            .text("Máx", 250, currentY)
-            .text("Unidad", 290, currentY)
-            .text("Estado", 350, currentY)
-            .text("A pedir", 420, currentY);
-
-          doc
-            .moveTo(50, currentY + 18)
-            .lineTo(520, currentY + 18)
-            .stroke();
-
-          currentY += 28;
-        }
-
-        const toPedir = Math.max(0, product.maxQuantity - product.stock);
-
-        doc.text(product.name, 50, currentY, { width: 95 });
-        doc.text(product.stock.toString(), 150, currentY);
-        doc.text(product.minQuantity.toString(), 210, currentY);
-        doc.text(product.maxQuantity.toString(), 250, currentY);
-        doc.text(product.unit, 290, currentY);
-        doc.text(product.status, 350, currentY);
-        doc.text(toPedir.toString(), 420, currentY);
-
-        currentY += rowHeight;
-      });
-
-      // Separador entre proveedores
-      doc
-        .moveTo(50, currentY + 10)
-        .lineTo(520, currentY + 10)
-        .stroke();
-
-      currentY += 25;
-      doc.moveDown(0.5);
-      currentY = doc.y;
+    columns.forEach((col) => {
+      doc.text(col.header, col.x, tableTop, { width: col.width });
     });
 
-    // Footer
-    currentY = doc.y;
+    // Línea separadora
     doc
-      .moveTo(50, currentY)
-      .lineTo(520, currentY)
+      .moveTo(50, tableTop + 18)
+      .lineTo(535, tableTop + 18)
       .stroke();
 
+    currentY = tableTop + 25;
+
+    // Filas de productos
+    doc.font("Helvetica").fontSize(8);
+    sortedProducts.forEach((product) => {
+      // Verificar salto de página
+      if (currentY > 700) {
+        doc.addPage();
+        currentY = 50;
+
+        // Repetir headers después del salto
+        doc.font("Helvetica-Bold").fontSize(8);
+        columns.forEach((col) => {
+          doc.text(col.header, col.x, currentY, { width: col.width });
+        });
+
+        doc
+          .moveTo(50, currentY + 18)
+          .lineTo(535, currentY + 18)
+          .stroke();
+
+        currentY += 25;
+        doc.font("Helvetica").fontSize(8);
+      }
+
+      const toPedir = Math.max(0, product.maxQuantity - product.stock);
+      const toPedirStr = Number(toPedir.toFixed(2)).toString();
+      const providerName = product.supplier?.name || "Sin proveedor";
+      const contactInfo = product.supplier?.phone || product.supplier?.email || "";
+
+      doc.text(product.name, 50, currentY, { width: 100 });
+      doc.text(product.stock.toString(), 155, currentY);
+      doc.text(product.minQuantity.toString(), 190, currentY);
+      doc.text(product.maxQuantity.toString(), 220, currentY);
+      doc.text(product.unit, 250, currentY);
+      doc.text(product.status, 295, currentY, { width: 60 });
+      doc.text(toPedirStr, 360, currentY);
+      doc.text(providerName, 400, currentY, { width: 70 });
+      doc.text(contactInfo, 475, currentY, { width: 60 });
+
+      currentY += rowHeight;
+    });
+
+    // Línea final de tabla
+    doc
+      .moveTo(50, currentY)
+      .lineTo(535, currentY)
+      .stroke();
+
+    // Footer
+    currentY += 20;
     doc
       .font("Helvetica")
       .fontSize(9)
-      .text(`Total productos: ${products.length}`, 50, currentY + 10, {
+      .text(`Total productos: ${products.length}`, 50, currentY, {
         align: "center",
       });
 

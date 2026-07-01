@@ -115,15 +115,35 @@ export default function ChecklistPage() {
       }));
 
     try {
-      const response = await api.post("/api/reports", {
+      // 1. Guardar reporte de checklist
+      const checklistResponse = await api.post("/api/reports", {
         items: selectedProducts,
       });
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
+      if (!checklistResponse.ok) {
+        const errData = await checklistResponse.json().catch(() => ({}));
         throw new Error(errData.error || "Error al enviar el reporte");
       }
 
-      setSuccess("¡Reporte de checklist enviado exitosamente!");
+      // 2. Generar y enviar PDF de Solicitud de Pedidos
+      let pdfSuccess = false;
+      try {
+        const pdfResponse = await api.post("/api/reports/order-request-pdf", {
+          productIds: selectedIds,
+        });
+        if (pdfResponse.ok) {
+          pdfSuccess = true;
+        }
+      } catch (pdfErr) {
+        console.error("Error al generar PDF:", pdfErr);
+      }
+
+      // Mensaje según resultado
+      if (pdfSuccess) {
+        setSuccess("Reporte guardado y PDF enviado a reportes@wakecoffee.es");
+      } else {
+        setSuccess("Reporte guardado, pero hubo un error al generar el PDF");
+      }
+
       setSelectedIds([]);
 
       setTimeout(() => {
